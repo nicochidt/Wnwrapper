@@ -1,0 +1,5 @@
+cmake_minimum_required (VERSION 2.6)
+project (WnWrapper)
+subdirs(src)
+#file(GLOB WnSrc "*.h" "*.cpp")
+#add_executable(WindNinja ${WnSrc})
