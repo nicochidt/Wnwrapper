@@ -65,9 +65,14 @@ private:
 
     double *DIAG;
     double *PHI, *RHS, *SK, *solution;
-    int *row_ptr, *col_ind, NUMNP;
+    int *row_ptr, *col_ind, NUMNP, NZND;
     double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
     double alpha;                //alpha = alphaH/alphaV, determined by stability
+	
+#ifdef CUDA
+	int *cu_csr_row_ptr, *cu_csr_col_ind;
+	double *cu_csr_data;
+#endif
 
     bool solve(double *SK, double *RHS, double *PHI, int *row_ptr,
                int *col_ind, int NUMNP, int MAXITS, int print_iters, double stop_tol);
@@ -102,7 +107,16 @@ private:
     /*-----------------------------------------------------------------------------
      *  End MKL Section
      *-----------------------------------------------------------------------------*/
-    
+    /*-----------------------------------------------------------------------------
+	 *  CUDA specific section
+	 *-----------------------------------------------------------------------------*/
+	void cuda_alloc_csr_memory();
+	
+	void csr2ell();
+	
+	void csr_mv_mul();
+	
+	   
 
     /* ----------------------------------------------------------------------------
      *  VDSpM  section

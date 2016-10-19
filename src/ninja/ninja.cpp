@@ -16,7 +16,12 @@ ninja::ninja(char *mat, char *col_indx, char *row_p, char *b)
     std::cout << "Reading files"<<std::endl;
     if (Afd.is_open())
     {   Afd >> nznd;
+		NZND = nznd;
+#ifdef CUDA
+		cudaMallocManaged(&SK, sizeof(double) * nznd);
+#else
         SK = new double[nznd];
+#endif
         for (int i = 0; i < nznd; i++)
             Afd >> SK[i];
     }
@@ -29,8 +34,14 @@ ninja::ninja(char *mat, char *col_indx, char *row_p, char *b)
     {   bfd >> numnp;
         NUMNP = numnp;
         std::cout << b << " reading"<<std::endl;
+#ifdef CUDA
+		cudaMallocManaged(&RHS, sizeof(double) * numnp);
+		cudaMallocManaged(&RHS, sizeof(double) * numnp);
+		memset(RHS, 0, sizeof(double) * numnp);             
+#else
         RHS = new double[numnp];
         PHI = new double[numnp]();   // initialized with zeros
+#endif
         for (int i = 0; i < numnp; i++)
             bfd >> RHS[i];
         std::cout << b << " file readed"<<std::endl;
@@ -43,7 +54,11 @@ ninja::ninja(char *mat, char *col_indx, char *row_p, char *b)
     if (col_indfd.is_open())
     {   col_indfd >> aux;
         if (aux != nznd) throw std::runtime_error ("Incompatible files");
+#ifdef CUDA
+		cudaMallocManaged(&col_ind, sizeof(int) * nznd);
+#else
         col_ind=new int[nznd];        //This holds the global column number of the corresponding element in the CRS storage
+#endif
         for (int i = 0; i < nznd; i++)
             col_indfd >> col_ind[i];
         std::cout << col_indx << " file readed"<<std::endl;
@@ -54,7 +69,11 @@ ninja::ninja(char *mat, char *col_indx, char *row_p, char *b)
     {   row_ptrfd >> aux;
         aux -=1;
         if (aux != numnp) throw std::runtime_error ("Incompatible files");
+#ifdef CUDA
+		cudaMallocManaged(&row_ptr, sizeof(int) * (numnp + 1)); 
+#else
         row_ptr=new int[numnp+1];     //This holds the element number in the SK array (CRS) of the first non-zero entry for the    
+#endif
         for (int i = 0; i < numnp + 1; i++)
             row_ptrfd >> row_ptr[i];
         std::cout << row_ptrfd << " file readed"<<std::endl;
@@ -576,6 +595,14 @@ void ninja::cblas_daxpy(const int N, const double alpha, const double *X, const 
 	#pragma omp parallel for
 	for(i=0; i<N; i++)
 		Y[i] += alpha*X[i];
+}
+
+
+void cuda_alloc_csr_memory()
+{
+	double *cu_csr_row_ptr, double *cu_csr_col_ind, double *cu_csr_data, int data_size, int matrix_size
+	cudaError_t custat1, custat2, custat3;
+	custat1 = cudaMalloc((void**)&cu_csr_row_ptr, sizeof(int) * NUMNP)
 }
 
 
